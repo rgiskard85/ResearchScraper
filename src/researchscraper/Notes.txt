@@ -1,0 +1,22 @@
+http://scholar.google.gr/scholar?as_q=&as_epq=&as_oq=&as_eq=&as_occt=any&as_sauthors=christos+doulkeridis&as_publication=&as_ylo=&as_yhi=&btnG=&hl=en&as_sdt=0%2C5
+http://scholar.google.gr/scholar?as_q=&as_epq=&as_oq=&as_eq=&as_occt=any&as_sauthors=christos+doulkeridis&as_publication=&as_ylo=2014&as_yhi=2015&btnG=&hl=en&as_sdt=0%2C5
+
+Jsoup.connect(itemUrl)
+     .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36")
+     .get()
+
+
+http://scholar.google.gr/scholar?start=10&q=author:christos+author:doulkeridis&hl=en&as_sdt=0,5
+
+http://scholar.google.gr/scholar?start=20&q=author:christos+author:doulkeridis&hl=en&as_sdt=0,5
+
+http://scholar.google.gr/scholar?start=30&q=author:athanasios+author:kanatas&hl=en&as_sdt=0,5&as_ylo=2000&as_yhi=2015
+
+http://scholar.google.gr/scholar?as_q=&as_epq=&as_oq=&as_eq=&as_occt=any&as_sauthors=christos+doulkeridis&as_publication=&as_ylo=2000&as_yhi=2015&hl=en&as_sdt=0%2C5
+
+http://scholar.google.gr/scholar?start=10&q=author:christos+author:doulkeridis&hl=en&as_sdt=0,5&as_ylo=2000&as_yhi=2015
+
+
+http://scholar.google.gr/scholar?as_q=&as_epq=&as_oq=&as_eq=&as_occt=any&as_sauthors=christos+doulkeridis&as_publication=&as_ylo=1996&as_yhi=2015&btnG=&hl=en&as_sdt=0%2C5
+
+http://scholar.google.gr/scholar?start=30&q=author:christos+author:doulkeridis&hl=en&as_sdt=0,5&as_ylo=1996&as_yhi=2015
