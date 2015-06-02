@@ -113,10 +113,16 @@ public class ScholarReader {
                     // title exists in publication???
                     if (pDBC.selPubIdByTitle(title)> -1) {
                         // ... yes
+                        // publication is linked to researcher?
+                        if ()
                     }
                     else {
-                        // ... no, insert title in publication
-                        pDBC.insTitle(title);
+                        // ... no, insert title in publication and get generated key
+                        int publication_id = pDBC.insTitle(title);
+                        // ... then link the researcher with the publication
+                        pDBC.insPubRes(publication_id, researcher_id);
+                        // ... then link the publication with the citations number
+                        pDBC.insCitations(publication_id, citations);
                         
                     }
                 }

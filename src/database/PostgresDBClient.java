@@ -9,28 +9,63 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
 import java.sql.Statement;
-import researchscraper.ScholarReader;
 
 /**
  *
  * @author Dionysios-Charalampos Vythoulkas <dcvythoulkas@gmail.com>
  */
 public class PostgresDBClient {
-    final String dbUrl = "jdbc:postgresql://83.212.122.8:5432/postgres";
-    final String dbUser = "akademia";
-    final String dbPass = "ds525";
+    private static final String dbUrl = "jdbc:postgresql://83.212.122.8:5432/postgres";
+    private static final String dbUser = "akademia";
+    private static final String dbPass = "ds525";
     
-    public PostgresDBClient() {        
+    private Connection connection;
+    private PreparedStatement selectAllResearchers;
+    private PreparedStatement selResForScrape;
+    private PreparedStatement selPubIdByTitle;
+    private PreparedStatement insResearcher;
+    private PreparedStatement insTitle;
+    private PreparedStatement updResearcher;
+    private PreparedStatement delResearcher;
+    private PreparedStatement insPubRes;
+    private PreparedStatement insCitations;
+    private PreparedStatement selResFromPub;
+    
+    public PostgresDBClient() {
+        try {
+            connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+            
+            // prepare queries, query-names match those of respective method
+            selectAllResearchers = connection.prepareStatement("SELECT researcher_id, name_gr, surname_gr,"
+                    + " name, surname, email, last_update FROM public.researcher");
+            selResForScrape = connection.prepareStatement("SELECT name, surname FROM researcher "
+                    + "WHERE researcher_id = ?");
+            selPubIdByTitle = connection.prepareStatement("SELECT publication_id FROM publication"
+                    + " WHERE title = ?");
+            insResearcher = connection.prepareStatement("INSERT INTO public.researcher "
+                    + "(name_gr, surname_gr, name, surname, email) VALUES ( ?, ?, ?, ?, ?)");
+            insTitle = connection.prepareStatement("INSERT INTO publication (title) VALUES (?)");
+            updResearcher = connection.prepareStatement("UPDATE public.researcher SET name_gr = ?,"
+                    + " surname_gr = ?, name = ?, surname = ?, email = ? WHERE researcher_id = ?");
+            delResearcher = connection.prepareStatement("DELETE from public.researcher WHERE researcher_id = ?",
+                    Statement.RETURN_GENERATED_KEYS);
+            insPubRes = connection.prepareStatement("INSERT INTO pub_res (publication_id, researcher_id) VALUES (?, ?);");
+            insCitations = connection.prepareStatement("INSERT INTO citations (origin, publication_id, number)"
+                    + " VALUES ('scholar', ?, ?)");
+            selResFromPub = connection.prepareStatement(dbUrl);
+        }
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
     }
     
     // select all records from researcher table to show in main window
     public ResultSet selectAllResearchers() {
-        String query = "SELECT researcher_id, name_gr, surname_gr, name, surname, email, last_update FROM public.researcher";
+        
         try {
-            Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-            Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            return statement.executeQuery(query);
+            return selectAllResearchers.executeQuery();
         }
         catch (SQLException sqlException) {
             sqlException.printStackTrace();
@@ -41,12 +76,10 @@ public class PostgresDBClient {
     // select researcher's necessary scrape attributes
     public String[] selResForScrape(String researcher_id) {
         String[] researcherFullName = {"",""};
-        String query = "SELECT name, surname FROM researcher WHERE researcher_id = " + researcher_id;
-        try (
-                Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-                Statement statement = connection.createStatement())
+        try
         {
-            ResultSet resultSet =  statement.executeQuery(query);
+            selResForScrape.setString(1, researcher_id);
+            ResultSet resultSet =  selResForScrape.executeQuery();
             if (resultSet.next()) {
                 researcherFullName[0] = resultSet.getString(1);
                 researcherFullName[1] = resultSet.getString(2);
@@ -58,15 +91,16 @@ public class PostgresDBClient {
         return researcherFullName;
     }
     
+    // select all records from pub_res to check if pair researcher-publication exists
+    public boolean selRes
     // select a publication by title
     public int selPubIdByTitle(String title) {
         int response = -1;
-        String query = "SELECT publication_id FROM publication WHERE title = '" + title +"'";
-        try (
-                Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-                Statement statement = connection.createStatement())
+        
+        try 
         {
-            ResultSet resultSet = statement.executeQuery(query);
+            selPubIdByTitle.setString(1, title);
+            ResultSet resultSet = selPubIdByTitle.executeQuery();
             if (resultSet.next())
                 response = resultSet.getInt(1);
         }
@@ -78,14 +112,15 @@ public class PostgresDBClient {
     
     // insert new record in table researcher
     public void insResearcher(String nameGr, String surNameGr, String name, String surName, String email) {
-        String query = "INSERT INTO public.researcher (name_gr, surname_gr, name, surname, email) ";
-        query = query + "VALUES ('" + nameGr + "','" + surNameGr + "','" + name + "','" + surNameGr + "','" + email + "')";
-        try (                
-                Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-                Statement statement = connection.createStatement();
-                )
+        try 
         {
-            statement.executeUpdate(query);
+            insResearcher.setString(1, nameGr);
+            insResearcher.setString(2, surNameGr);
+            insResearcher.setString(3, name);
+            insResearcher.setString(4, surName);
+            insResearcher.setString(5, email);
+            
+            insResearcher.executeUpdate();
             
         }
         catch (SQLException sqlException) {
@@ -93,32 +128,60 @@ public class PostgresDBClient {
         }
     }
     
-    // insert a new title in publication
-    public void insTitle(String title) {
-        String query = "INSERT INTO publication (title) VALUES ('" + title + "')";
-        try (
-                Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-                Statement statement = connection.createStatement())
-        {
-            statement.executeUpdate(query, autoGeneratedKeys);
+    // insert new record in table pub_res
+    public void insPubRes(int publication_id , String researcher_id) {
+        try {
+            insPubRes.setInt(1, publication_id);
+            insPubRes.setString(2, researcher_id);
+            
+            insPubRes.executeUpdate();
         }
         catch (SQLException sqlException) {
             sqlException.printStackTrace();
         }
     }
     
+    // insert a new title in publication
+    public int insTitle(String title) {
+        int response = -1;
+        try
+        {
+            insTitle.setString(1, title);
+            insTitle.executeUpdate();
+            ResultSet resultSet = insTitle.getGeneratedKeys();
+            if (resultSet.next())
+                response = resultSet.getInt(1);
+        }
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return response;
+    }
+    
+    // insert a citation in table citations
+    public void insCitations(int publication_id, String number) {
+        try {
+            insCitations.setInt(1, publication_id);
+            insCitations.setString(2, number);
+            
+            insCitations.executeUpdate();
+        }
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+    }
     // update record in researcher table
     public void updResearcher(String researcher_id, String nameGr, String surNameGr, String name, String surName, String email) {
-        String query = "UPDATE public.researcher SET name_gr = '" + nameGr + "', surname_gr = '" + surNameGr + "', ";
-        query = query + "name = '" + name + "', surname = '" + surName +"', email = '" + email + "'";
-        query = query + "where researcher_id = " + researcher_id;
-        
-        try (
-            Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-            Statement statement = connection.createStatement()
-                )
+        try
         {
-            statement.executeUpdate(query);
+            updResearcher.setString(1, nameGr);
+            updResearcher.setString(2, surNameGr);
+            updResearcher.setString(3, name);
+            updResearcher.setString(4, surName);
+            updResearcher.setString(5, email);
+            updResearcher.setString(6, researcher_id);
+            
+            updResearcher.executeUpdate();
         }
         catch (SQLException sqlException) {
             sqlException.printStackTrace();
@@ -127,12 +190,9 @@ public class PostgresDBClient {
     
     // delete record from researcher table
     public void delResearcher(String researcher_id) {
-        String query = "DELETE from public.researcher WHERE researcher_id = " + researcher_id;
-        try (
-                Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-                Statement statement = connection.createStatement())
+        try
         {
-            statement.executeUpdate(query);
+            delResearcher.executeUpdate();
         }
         catch (SQLException sqlException) {
             sqlException.printStackTrace();
