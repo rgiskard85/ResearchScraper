@@ -3,7 +3,8 @@ package database;
 
 /**
  *
- * @author Dionysios-Charalampos Vythoulkas <dcvythoulkas@gmail.com>
+ * @author P. & V. Deitel
+ *  Modified by Dionysios-Charalampos Vythoulkas <dcvythoulkas@gmail.com>
  */
 
 import java.sql.ResultSet;

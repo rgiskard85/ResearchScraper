@@ -7,21 +7,13 @@ package researchscraper;
 
 /**
  *
- * @author giskard
+ * @author Dionysios-Charalampos Vythoulkas <dcvythoulkas@gmail.com>
  */
 public class ResearchScraper {
 
-    /**
-     * @param args the command line arguments
-     */
+    
     public static void main(String[] args) {
-        String researcherName = "athanasios";
-        String researcherSurName = "kanatas";
-        String yearHigh = "";
-        String yearLow = "";
-        
-        
-        ScholarReader sr = new ScholarReader(researcherName, researcherSurName, yearHigh, yearLow);
+        ScholarReader sr = new ScholarReader("2", "", "");
         int pages = 0;
         
         if (sr.resultsExist()) System.out.println("We have results!");
@@ -34,7 +26,7 @@ public class ResearchScraper {
             for (int i = 0;i<(pages*10);i = i + 10) {
                 System.out.println("You are on page: " + (i/10+1));
                 sr.getResults(i);
-                System.out.printf("\n\n\n\n\n");
+                System.out.printf("\n\n");
             }
         }
     }
