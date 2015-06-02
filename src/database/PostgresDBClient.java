@@ -46,7 +46,8 @@ public class PostgresDBClient {
                     + " WHERE title = ?");
             insResearcher = connection.prepareStatement("INSERT INTO public.researcher "
                     + "(name_gr, surname_gr, name, surname, email) VALUES ( ?, ?, ?, ?, ?)");
-            insTitle = connection.prepareStatement("INSERT INTO publication (title) VALUES (?)");
+            insTitle = connection.prepareStatement("INSERT INTO publication (title) VALUES (?)",
+                    Statement.RETURN_GENERATED_KEYS);
             updResearcher = connection.prepareStatement("UPDATE public.researcher SET name_gr = ?,"
                     + " surname_gr = ?, name = ?, surname = ?, email = ? WHERE researcher_id = ?");
             delResearcher = connection.prepareStatement("DELETE from public.researcher WHERE researcher_id = ?",
