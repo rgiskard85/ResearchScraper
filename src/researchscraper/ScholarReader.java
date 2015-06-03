@@ -109,21 +109,31 @@ public class ScholarReader {
                 }
                 if (!title.equals("")) {
                     System.out.println("Insert researcher_id = " + researcher_id + ", title = " + title + ", citations = " + citations);
-                    
+                    String origin = "scholar";
+                    int publication_id = pDBC.selPubIdByTitle(title);
                     // title exists in publication???
-                    if (pDBC.selPubIdByTitle(title)> -1) {
+                    if (publication_id > -1) {
                         // ... yes
                         // publication is linked to researcher?
-                        if ()
+                        if (!pDBC.selAllPubRes(researcher_id, publication_id)) {
+                            //...no
+                            // link researcher with publication
+                            pDBC.insPubRes(publication_id, researcher_id);
+                        }
+                        // citations are up to date?
+                        if (pDBC.selCitation(origin, publication_id) > -1){
+                            // ... no
+                            // update citations
+                            pDBC.insCitations(origin, publication_id, citations);
+                        }
                     }
                     else {
                         // ... no, insert title in publication and get generated key
-                        int publication_id = pDBC.insTitle(title);
+                        publication_id = pDBC.insTitle(title);
                         // ... then link the researcher with the publication
                         pDBC.insPubRes(publication_id, researcher_id);
                         // ... then link the publication with the citations number
-                        pDBC.insCitations(publication_id, citations);
-                        
+                        pDBC.insCitations(origin,publication_id, citations);
                     }
                 }
             }

@@ -31,7 +31,8 @@ public class PostgresDBClient {
     private PreparedStatement delResearcher;
     private PreparedStatement insPubRes;
     private PreparedStatement insCitations;
-    private PreparedStatement selResFromPub;
+    private PreparedStatement selAllPubRes;
+    private PreparedStatement selCitation;
     
     public PostgresDBClient() {
         try {
@@ -54,8 +55,9 @@ public class PostgresDBClient {
                     Statement.RETURN_GENERATED_KEYS);
             insPubRes = connection.prepareStatement("INSERT INTO pub_res (publication_id, researcher_id) VALUES (?, ?);");
             insCitations = connection.prepareStatement("INSERT INTO citations (origin, publication_id, number)"
-                    + " VALUES ('scholar', ?, ?)");
-            selResFromPub = connection.prepareStatement(dbUrl);
+                    + " VALUES (?, ?, ?)");
+            selAllPubRes = connection.prepareStatement("SELECT * FROM pub_res WHERE researcher_id = ? AND publication_id = ?");
+            selCitation = connection.prepareStatement("SELECT citations FROM citations WHERE origin = ? AND publication_id = ?");
         }
         catch (SQLException sqlException) {
             sqlException.printStackTrace();
@@ -93,7 +95,20 @@ public class PostgresDBClient {
     }
     
     // select all records from pub_res to check if pair researcher-publication exists
-    public boolean selRes
+    public boolean selAllPubRes(String researcher_id, int publication_id) {
+        boolean response = false;
+        try {
+            selAllPubRes.setString(1, researcher_id);
+            selAllPubRes.setInt(2, publication_id);
+            
+            response = selAllPubRes.execute();
+        }
+        catch(SQLException sqlException) {
+            
+        }
+        return response;
+    }
+            
     // select a publication by title
     public int selPubIdByTitle(String title) {
         int response = -1;
@@ -102,6 +117,23 @@ public class PostgresDBClient {
         {
             selPubIdByTitle.setString(1, title);
             ResultSet resultSet = selPubIdByTitle.executeQuery();
+            if (resultSet.next())
+                response = resultSet.getInt(1);
+        }
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return response;
+    }
+    
+    // select a citation
+    public int selCitation(String origin, int publication_id) {
+        int response = -1;
+        try {
+            selCitation.setString(1, origin);
+            selCitation.setInt(2, publication_id);
+            
+            ResultSet resultSet = selCitation.executeQuery();
             if (resultSet.next())
                 response = resultSet.getInt(1);
         }
@@ -160,10 +192,11 @@ public class PostgresDBClient {
     }
     
     // insert a citation in table citations
-    public void insCitations(int publication_id, String number) {
+    public void insCitations(String origin, int publication_id, String number) {
         try {
-            insCitations.setInt(1, publication_id);
-            insCitations.setString(2, number);
+            insCitations.setString(1, origin);                    
+            insCitations.setInt(2, publication_id);
+            insCitations.setString(3, number);
             
             insCitations.executeUpdate();
         }
@@ -171,6 +204,7 @@ public class PostgresDBClient {
             sqlException.printStackTrace();
         }
     }
+    
     // update record in researcher table
     public void updResearcher(String researcher_id, String nameGr, String surNameGr, String name, String surName, String email) {
         try
