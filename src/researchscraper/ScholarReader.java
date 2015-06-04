@@ -57,17 +57,20 @@ public class ScholarReader {
         }
     }
     
+    // Are there any results for this researcher?
     public boolean resultsExist() {
         Elements noResults = doc.getElementsByClass("gs_med");
         return noResults.isEmpty();
     }
     
+    // How many pages are the results??
     public int numOfResultPages() {
         int numOfPages =-2;
         Element navigation = doc.getElementById("gs_n");
         return numOfPages + navigation.childNode(0).childNode(0).childNode(0).childNode(0).childNodeSize();
     }
     
+    // Get the results
     public void getResults(int page) {
         
         // Create search url for Google Scholar to read results, page by page
@@ -113,38 +116,43 @@ public class ScholarReader {
                 if (!title.equals("")) {
                     System.out.println("Insert researcher_id = " + researcher_id + ", title = " + title + ", citations = " + citations);
                     String origin = "scholar";
-                    int publication_id = pDBC.selPubIdByTitle(title);
-                    // title exists in publication???
-                    if (publication_id > -1) {
-                        // ... yes
-                        // publication is linked to researcher?
-                        if (!pDBC.selAllPubRes(researcher_id, publication_id)) {
-                            //...no
-                            // link researcher with publication
-                            pDBC.insPubRes(publication_id, researcher_id);
-                        }
-                        // citations are up to date?
-                        if (pDBC.selCitation(origin, publication_id) != citations){
-                            // ... no
-                            // update citations
-                            pDBC.updCitations(citations, origin, publication_id);
-                        }
-                    }
-                    else {
-                        // ... no, insert title in publication and get generated key
-                        publication_id = pDBC.insTitle(title);
-                        // ... then link the researcher with the publication
-                        pDBC.insPubRes(publication_id, researcher_id);
-                        // ... then link the publication with the citations number
-                        pDBC.insCitations(origin,publication_id, citations);
-                    }
+                    this.send2db(origin, researcher_id, title, citations);
                 }
             }
         } catch (IOException ex) {
             System.out.println("Oops!!! Something went terribly wrong! Good luck debugging ;)");
             Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+            
+    }
+    
+    // Insert or update records based on scrape results
+    private void send2db(String origin, int researcher_id, String title, int citations) {
+            int publication_id = pDBC.selPubIdByTitle(title);
+            // title exists in publication???
+            if (publication_id > -1) {
+                // ... yes
+                // publication is linked to researcher?
+                if (!pDBC.selAllPubRes(researcher_id, publication_id)) {
+                    //...no
+                    // link researcher with publication
+                    pDBC.insPubRes(publication_id, researcher_id);
+                }
+                // citations are up to date?
+                if (pDBC.selCitation(origin, publication_id) != citations){
+                    // ... no
+                    // update citations
+                    pDBC.updCitations(citations, origin, publication_id);
+                }
+            }
+            else {
+                // ... no, insert title in publication and get generated key
+                publication_id = pDBC.insTitle(title);
+                // ... then link the researcher with the publication
+                pDBC.insPubRes(publication_id, researcher_id);
+                // ... then link the publication with the citations number
+                pDBC.insCitations(origin,publication_id, citations);
+            }
     }
     
 }
