@@ -23,7 +23,7 @@ public class ScholarReader {
     
     
     // Local variables supplied by user
-    String researcher_id="";
+    int researcher_id= -1;
     String[] searchTerms;
     PostgresDBClient pDBC;
     
@@ -37,9 +37,9 @@ public class ScholarReader {
     Document doc; // create document to store scholar's results
     
     public ScholarReader(String researcher_id,String yearHigh, String yearLow) {
-        this.researcher_id = researcher_id;
+        this.researcher_id = Integer.parseInt(researcher_id);
         this.pDBC = new PostgresDBClient();
-        this.searchTerms = Arrays.copyOf(pDBC.selResForScrape(researcher_id),4);
+        this.searchTerms = Arrays.copyOf(pDBC.selResForScrape(this.researcher_id),4);
         this.searchTerms[2] = yearLow;
         this.searchTerms[3] = yearHigh;
         
@@ -50,7 +50,10 @@ public class ScholarReader {
             doc = Jsoup.connect(gScholar).userAgent(browserUserAgent).get(); // actually retrieve scholar's results
         } catch (IOException ex) {
             System.out.println("Oops!!! Something went terribly wrong! Good luck debugging ;)");
-            Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
+            if (ex.toString().substring(0, 66).equals("org.jsoup.HttpStatusException: HTTP error fetching URL. Status=503"))
+                System.out.println("We overdid it!!! Now Google has blocked our IP :( ");            
+            //Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(1);
         }
     }
     
@@ -76,7 +79,7 @@ public class ScholarReader {
             // Get all elements that hold results
             Elements results = doc.getElementsByClass(className);
             String title = "";
-            String citations = "0";
+            int citations = 0;
             for (Element result:results) {
                 // Get the two parts of every result.
                 Elements resultParts = result.children();
@@ -102,7 +105,7 @@ public class ScholarReader {
                         // get the number of citations
                         // from the last node, which has a variying index
                         if (part.child(part.childNodeSize()-1).child(0).ownText().length()>5 && part.child(part.childNodeSize()-1).child(0).ownText().substring(0,5).equalsIgnoreCase("Cited")) {
-                            citations = part.child(part.childNodeSize()-1).child(0).ownText().substring(9);
+                            citations = Integer.parseInt(part.child(part.childNodeSize()-1).child(0).ownText().substring(9));
                             //System.out.println("This is the number of citations: " + citations);
                         }
                     }
@@ -121,10 +124,10 @@ public class ScholarReader {
                             pDBC.insPubRes(publication_id, researcher_id);
                         }
                         // citations are up to date?
-                        if (pDBC.selCitation(origin, publication_id) > -1){
+                        if (pDBC.selCitation(origin, publication_id) != citations){
                             // ... no
                             // update citations
-                            pDBC.insCitations(origin, publication_id, citations);
+                            pDBC.updCitations(citations, origin, publication_id);
                         }
                     }
                     else {

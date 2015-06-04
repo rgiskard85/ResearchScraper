@@ -33,6 +33,7 @@ public class PostgresDBClient {
     private PreparedStatement insCitations;
     private PreparedStatement selAllPubRes;
     private PreparedStatement selCitation;
+    private PreparedStatement updCitations;
     
     public PostgresDBClient() {
         try {
@@ -51,6 +52,7 @@ public class PostgresDBClient {
                     Statement.RETURN_GENERATED_KEYS);
             updResearcher = connection.prepareStatement("UPDATE public.researcher SET name_gr = ?,"
                     + " surname_gr = ?, name = ?, surname = ?, email = ? WHERE researcher_id = ?");
+            updCitations = connection.prepareStatement("UPDATE citations SET number = ? WHERE origin = ? AND publication_id = ?;");
             delResearcher = connection.prepareStatement("DELETE from public.researcher WHERE researcher_id = ?",
                     Statement.RETURN_GENERATED_KEYS);
             insPubRes = connection.prepareStatement("INSERT INTO pub_res (publication_id, researcher_id) VALUES (?, ?);");
@@ -77,11 +79,12 @@ public class PostgresDBClient {
     }
     
     // select researcher's necessary scrape attributes
-    public String[] selResForScrape(String researcher_id) {
+    public String[] selResForScrape(int researcher_id) {
         String[] researcherFullName = {"",""};
         try
         {
-            selResForScrape.setString(1, researcher_id);
+            selResForScrape.setInt(1, researcher_id);
+            System.out.println(selResForScrape.toString());
             ResultSet resultSet =  selResForScrape.executeQuery();
             if (resultSet.next()) {
                 researcherFullName[0] = resultSet.getString(1);
@@ -95,10 +98,10 @@ public class PostgresDBClient {
     }
     
     // select all records from pub_res to check if pair researcher-publication exists
-    public boolean selAllPubRes(String researcher_id, int publication_id) {
+    public boolean selAllPubRes(int researcher_id, int publication_id) {
         boolean response = false;
         try {
-            selAllPubRes.setString(1, researcher_id);
+            selAllPubRes.setInt(1, researcher_id);
             selAllPubRes.setInt(2, publication_id);
             
             response = selAllPubRes.execute();
@@ -162,10 +165,10 @@ public class PostgresDBClient {
     }
     
     // insert new record in table pub_res
-    public void insPubRes(int publication_id , String researcher_id) {
+    public void insPubRes(int publication_id , int researcher_id) {
         try {
             insPubRes.setInt(1, publication_id);
-            insPubRes.setString(2, researcher_id);
+            insPubRes.setInt(2, researcher_id);
             
             insPubRes.executeUpdate();
         }
@@ -192,11 +195,11 @@ public class PostgresDBClient {
     }
     
     // insert a citation in table citations
-    public void insCitations(String origin, int publication_id, String number) {
+    public void insCitations(String origin, int publication_id, int number) {
         try {
             insCitations.setString(1, origin);                    
             insCitations.setInt(2, publication_id);
-            insCitations.setString(3, number);
+            insCitations.setInt(3, number);
             
             insCitations.executeUpdate();
         }
@@ -223,6 +226,19 @@ public class PostgresDBClient {
         }
     }
     
+    // update number in citations table
+    public void updCitations(int number, String origin, int publication_id) {
+        try {
+            updCitations.setInt(1, number);
+            updCitations.setString(2, origin);
+            updCitations.setInt(3, publication_id);
+            
+            updCitations.executeUpdate();
+        }
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+    }
     // delete record from researcher table
     public void delResearcher(String researcher_id) {
         try
