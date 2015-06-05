@@ -53,7 +53,7 @@ public class ScholarReader {
             System.out.println("Oops!!! Something went terribly wrong! Good luck debugging ;)");
             if (ex.toString().substring(0, 66).equals("org.jsoup.HttpStatusException: HTTP error fetching URL. Status=503"))
                 System.out.println("We overdid it!!! Now Google has blocked our IP :( ");            
-            Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(1);
         }
     }
@@ -123,7 +123,7 @@ public class ScholarReader {
             }
         } catch (IOException ex) {
             System.out.println("Oops!!! Something went terribly wrong! Good luck debugging ;)");
-            Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
         }
             
     }
