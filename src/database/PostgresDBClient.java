@@ -34,6 +34,7 @@ public class PostgresDBClient {
     private PreparedStatement selAllPubRes;
     private PreparedStatement selCitation;
     private PreparedStatement updCitations;
+    private PreparedStatement updLastUpdate;
     
     public PostgresDBClient() {
         try {
@@ -54,6 +55,7 @@ public class PostgresDBClient {
             updResearcher = connection.prepareStatement("UPDATE public.researcher SET name_gr = ?,"
                     + " surname_gr = ?, name = ?, surname = ?, email = ? WHERE researcher_id = ?");
             updCitations = connection.prepareStatement("UPDATE citations SET number = ? WHERE origin = ? AND publication_id = ?;");
+            updLastUpdate = connection.prepareStatement("UPDATE researcher SET last_update = CURRENT_DATE WHERE researcher_id = ?");
             delResearcher = connection.prepareStatement("DELETE from public.researcher WHERE researcher_id = ?",
                     Statement.RETURN_GENERATED_KEYS);
             insPubRes = connection.prepareStatement("INSERT INTO pub_res (publication_id, researcher_id) VALUES (?, ?);");
@@ -209,8 +211,18 @@ public class PostgresDBClient {
         }
     }
     
+    public void updLastUpdate(int researcher_id) {
+        try {
+            updLastUpdate.setInt(1, researcher_id);
+            updLastUpdate.executeUpdate();
+        }
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+    }
+    
     // update record in researcher table
-    public void updResearcher(String researcher_id, String nameGr, String surNameGr, String name, String surName, String email) {
+    public void updResearcher(int researcher_id, String nameGr, String surNameGr, String name, String surName, String email) {
         try
         {
             updResearcher.setString(1, nameGr);
@@ -218,7 +230,7 @@ public class PostgresDBClient {
             updResearcher.setString(3, name);
             updResearcher.setString(4, surName);
             updResearcher.setString(5, email);
-            updResearcher.setString(6, researcher_id);
+            updResearcher.setInt(6, researcher_id);
             
             updResearcher.executeUpdate();
         }
@@ -241,9 +253,10 @@ public class PostgresDBClient {
         }
     }
     // delete record from researcher table
-    public void delResearcher(String researcher_id) {
+    public void delResearcher(int researcher_id) {
         try
         {
+            delResearcher.setInt(1, researcher_id);
             delResearcher.executeUpdate();
         }
         catch (SQLException sqlException) {

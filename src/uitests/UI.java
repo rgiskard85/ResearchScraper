@@ -20,6 +20,9 @@ import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -30,8 +33,10 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import researchscraper.ScholarReader;
 
 
 public class UI extends JFrame {
@@ -94,7 +99,7 @@ public class UI extends JFrame {
                     public void actionPerformed(ActionEvent event) {
                         if (jtxtNameGr.getText().equals("") || jtxtSurNameGr.getText().equals("") ||
                                 jtxtName.getText().equals("") || jtxtSurName.getText().equals("")) {
-                            JOptionPane.showMessageDialog(null,
+                            JOptionPane.showMessageDialog(rootPane,
                                     "Τα πεδία 'Όνομα', 'Επίθετο', 'Όνoμα Αναζήτησης', 'Επίθετο Αναζήτησης' "
                                             + "είναι υποχρεωτικά.",
                                     "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
@@ -147,7 +152,7 @@ public class UI extends JFrame {
                             }
                         }
                         else {
-                            JOptionPane.showMessageDialog(null, "Επιλέξτε εγγραφή για επεξεργασία",
+                            JOptionPane.showMessageDialog(rootPane, "Επιλέξτε εγγραφή για επεξεργασία",
                                     "Μήνυμα",JOptionPane.INFORMATION_MESSAGE);
                         }
                     }
@@ -161,14 +166,14 @@ public class UI extends JFrame {
                     public void actionPerformed(ActionEvent event) {
                         if (jtxtAA.getText().equals("") || jtxtNameGr.getText().equals("") || jtxtSurNameGr.getText().equals("") ||
                                 jtxtName.getText().equals("") || jtxtSurName.getText().equals("")) {
-                            JOptionPane.showMessageDialog(null,
+                            JOptionPane.showMessageDialog(rootPane,
                                     "Επιλέξτε εγγραφή για επεξεργασία.",
                                     "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
                         }
                         else {
                             PostgresDBClient pDBC = new PostgresDBClient();
                             pDBC.updResearcher(
-                                    jtxtAA.getText(),
+                                    Integer.parseInt(jtxtAA.getText()),
                                     jtxtNameGr.getText(),
                                     jtxtSurNameGr.getText(),
                                     jtxtName.getText(),
@@ -195,15 +200,15 @@ public class UI extends JFrame {
         JButton jbDelete = new JButton("Διαγραφή");
         jbDelete.addActionListener(
                 new ActionListener() { // anonymous inner class
-                    // handle JButton event and edit selected record from JTable
+                    // handle JButton event and delete selected record from JTable/database
                     @Override
                     public void actionPerformed(ActionEvent event) {
                         if (researchersTable.getSelectedRow() > -1) {
                             int row = researchersTable.convertRowIndexToModel(researchersTable.getSelectedRow());                        
-                            String researcher_id = researchersTable.getModel().getValueAt(row, 0).toString();
+                            int researcher_id = Integer.parseInt(researchersTable.getModel().getValueAt(row, 0).toString());
                             String nameGr = researchersTable.getModel().getValueAt(row, 1).toString();
                             String surNameGr = researchersTable.getModel().getValueAt(row, 2).toString();
-                            int response = JOptionPane.showConfirmDialog(null,
+                            int response = JOptionPane.showConfirmDialog(rootPane,
                                     "Θέλετε να διαγράψετε την εγγραφή '" + nameGr + " "
                                     + surNameGr + " και όλες τις σχετικές δημοσιεύσεις;",
                                     "Επιβεβαίωση διαγραφής",JOptionPane.OK_CANCEL_OPTION);
@@ -220,45 +225,108 @@ public class UI extends JFrame {
                             }
                         }
                         else 
-                            JOptionPane.showMessageDialog(null, "Επιλέξτε εγγραφή για διαγραφή",
+                            JOptionPane.showMessageDialog(rootPane, "Επιλέξτε εγγραφή για διαγραφή",
                                     "Μήνυμα", JOptionPane.PLAIN_MESSAGE);
                     }
                 }
         );
+        JButton jbMultiUpdate = new JButton("Μαζική ενημέρωση");
+        jbMultiUpdate.addActionListener(
+                new ActionListener() { // anonymous inner class
+                    // handle JButton event and update ALL publications for ALL researchers
+                    @Override
+                    public void actionPerformed(ActionEvent event) {
+                        int response = JOptionPane.showConfirmDialog(rootPane,
+                                "Η ενημέρωση όλων των δημοσιεύσεων όλων των ερευνητών ενδέχεται να προκαλέσει\n" +
+                                "σφάλμα και αποκλεισμού της IP διεύθυνσης σας λόγω των συστημάτων αυτοπροστασίας\n " +
+                                "που διαθέτουν οι σύγχρονες μηχανές αναζήτησης. Επιθυμείτε να συνεχίσετε;",
+                                "Επιβεβαίωση Μαζικής Ενημέρωσης",JOptionPane.OK_CANCEL_OPTION);
+                        if (response == 0) {
+                            for (int i = 0;i<researchersTable.getModel().getRowCount();i++) {
+                                ScrapeCoordinator(researchersTable.getModel().getValueAt(i, 0).toString());
+                            }
+                        }
+                        
+                    }
+                }
+        );
+        JButton jbSingleUpdate = new JButton("Μεμονωμένη Ενημέρωση");
+        jbSingleUpdate.addActionListener(
+                new ActionListener() { // anonymous inner class
+                    // handle JButton event and update ALL publications for ALL researchers
+                    @Override
+                    public void actionPerformed(ActionEvent event) {
+                        if (researchersTable.getSelectedRow() > -1) {
+                            int row = researchersTable.convertRowIndexToModel(researchersTable.getSelectedRow());
+                            ScrapeCoordinator(researchersTable.getModel().getValueAt(row, 0).toString());
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(rootPane, "Επιλέξτε εγγραφή για ενημέρωση",
+                                    "Μήνυμα", JOptionPane.PLAIN_MESSAGE);
+                        }
+                    }
+                }
+        );
+        JButton jbMSMultiUpdate = new JButton("Μαζική ενημέρωση");
+        JButton jbMSSingleUpdate = new JButton("Μεμονωμένη Ενημέρωση");
+        // Box
+        Box updScholarBox = Box.createHorizontalBox();        
+        updScholarBox.add(Box.createHorizontalGlue());
+        updScholarBox.add(jbMultiUpdate);
+        updScholarBox.add(Box.createHorizontalGlue());
+        updScholarBox.add(jbSingleUpdate);
+        updScholarBox.add(Box.createHorizontalGlue());
+        updScholarBox.setBorder(BorderFactory.createTitledBorder(null, "Google Scholar",TitledBorder.LEFT, TitledBorder.ABOVE_TOP));
+        
+        Box updAcademicBox = Box.createHorizontalBox();        
+        updAcademicBox.add(Box.createHorizontalGlue());
+        updAcademicBox.add(jbMSMultiUpdate);
+        updAcademicBox.add(Box.createHorizontalGlue());
+        updAcademicBox.add(jbMSSingleUpdate);
+        updAcademicBox.add(Box.createHorizontalGlue());
+        updAcademicBox.setBorder(BorderFactory.createTitledBorder(null, "Microsoft Acadmemic",TitledBorder.LEFT, TitledBorder.ABOVE_TOP));
         // JTable
         resultSetTableModel = new ResultSetTableModel();
         final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(resultSetTableModel);
         researchersTable = new JTable(resultSetTableModel);
         researchersTable.setRowSorter(sorter);
+        researchersTable.getTableHeader().setReorderingAllowed(false);
         // Position ui objects in the layout
         // weightx and weighty are 0 : the default
+        
         constraints.fill = GridBagConstraints.HORIZONTAL;
-        addComponent(jlblAA, 0, 1, 1, 1);
-        addComponent(jlblNameGr, 1, 1, 1, 1);
-        addComponent(jlblSurNameGr, 2, 1, 1, 1);
-        addComponent(jlblName, 3, 1, 1, 1);
-        addComponent(jlblSurName, 4, 1, 1, 1);
-        addComponent(jlblEmail, 5, 1, 1, 1);
-        addComponent(jlblDate, 6, 1, 1, 1);
-        addComponent(jtxtAA, 0, 2, 1, 1);
-        addComponent(jtxtNameGr, 1, 2, 1, 1);
-        addComponent(jtxtSurNameGr, 2, 2, 1, 1);
-        addComponent(jtxtName, 3, 2, 1, 1);
-        addComponent(jtxtSurName, 4, 2, 1, 1);
-        addComponent(jtxtEmail, 5, 2, 1, 1);
-        addComponent(jtxtDate, 6, 2, 1, 1);
-        constraints.fill = GridBagConstraints.NONE;
+        addComponent(jlblAA, 0, 0, 2, 1);
+        addComponent(jlblNameGr, 1, 0, 2, 1);
+        addComponent(jlblSurNameGr, 2, 0, 2, 1);
+        addComponent(jlblName, 3, 0, 2, 1);
+        addComponent(jlblSurName, 4, 0, 2, 1);
+        addComponent(jlblEmail, 5, 0, 2, 1);
+        addComponent(jlblDate, 6, 0, 2, 1);
+        constraints.weightx = 1;
+        constraints.weighty = 1;
+        addComponent(jtxtAA, 0, 2, 2, 1);
+        addComponent(jtxtNameGr, 1, 2, 2, 1);
+        addComponent(jtxtSurNameGr, 2, 2, 2, 1);
+        addComponent(jtxtName, 3, 2, 2, 1);
+        addComponent(jtxtSurName, 4, 2, 2, 1);
+        addComponent(jtxtEmail, 5, 2, 2, 1);
+        addComponent(jtxtDate, 6, 2, 2, 1);
+        //constraints.fill = GridBagConstraints.NONE;
         constraints.anchor = GridBagConstraints.WEST;
-        addComponent(jbClear, 0, 4, 1, 1);
-        addComponent(jbInsert, 1, 4, 1, 1);
-        addComponent(jbEdit, 3, 4, 1, 1);
-        addComponent(jbSave, 4, 4, 1, 1);
-        addComponent(jbDelete, 6, 4, 1, 1);
+        addComponent(jbClear, 0, 4, 2, 1);
+        addComponent(jbInsert, 1, 4, 2, 1);
+        addComponent(jbEdit, 3, 4, 2, 1);
+        addComponent(jbSave, 4, 4, 2, 1);
+        addComponent(jbDelete, 6, 4, 2, 1);
         constraints.anchor = GridBagConstraints.CENTER;
         constraints.fill = GridBagConstraints.BOTH;
-        constraints.weightx = 1000;
-        constraints.weighty = 1000;
-        addComponent(new JScrollPane(researchersTable), 9, 0, 5,1);
+        constraints.weightx = 1;
+        constraints.weighty = 1;
+        addComponent(updScholarBox, 7, 0, 3, 1);
+        addComponent(updAcademicBox, 7, 3, 3, 1);        
+        constraints.weightx = 100;
+        constraints.weighty = 100;
+        addComponent(new JScrollPane(researchersTable), 9, 0, 6,1);
         
         tabbedPane.addTab("Εισαγωγή", null, panel1, "Διαχείριση εισαγωγών");
         
@@ -267,15 +335,7 @@ public class UI extends JFrame {
         JLabel label2 = new JLabel("Panel2", SwingConstants.CENTER);
         JPanel panel2 = new JPanel();
         panel2.add(label2);
-        tabbedPane.addTab("Ενημέρωση", null, panel2, "Ενημέρωση δημοσιεύσεων");
-        
-        //////////////////////////  Panel 3  ///////////////////////////////////////////
-        // set up pane3 and add it to JTabbedPane
-        JLabel label3 = new JLabel("Panel3", SwingConstants.CENTER);
-        JPanel panel3 = new JPanel();
-        panel3.add(label3);
-        tabbedPane.addTab("Προβολη", null, panel3, "Προβολή καταγεγραμμένων δημοσιεύσεων");
-        
+        tabbedPane.addTab("Προβολη", null, panel2, "Προβολή καταγεγραμμένων δημοσιεύσεων");
         
         add(tabbedPane); // add JTabbedPane to frame        
     }
@@ -289,6 +349,51 @@ public class UI extends JFrame {
         constraints.gridheight = height;
         layout.setConstraints(component, constraints);
         panel1.add(component);
+    }
+    
+    private void ScrapeCoordinator(String id) {
+        try {
+            String researcher_id = id;
+            ScholarReader sr = new ScholarReader(researcher_id, "", "");
+            
+            int pages = 0;
+
+            if (sr.resultsExist()) {
+                System.out.println("We have results!");
+                JOptionPane.showMessageDialog(rootPane, "Βρέθηκαν αποτελέσματα για ερευνητή " + researcher_id,
+                        "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
+            }
+            else {
+                System.out.println("Your search came up with nothing");
+                JOptionPane.showMessageDialog(rootPane, "Δεν βρέθηκαν αποτελέσματα.\n"
+                        + "Τροποποιήστε τα στοιχεία αναζήτησης." + researcher_id,
+                        "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+            if (sr.resultsExist()) {
+                pages = sr.numOfResultPages();
+                if (pages == -2) pages = 0;
+                System.out.println("There are a total of " + pages + " result pages.");
+
+                for (int i = 0;i<(pages*10);i = i + 10) {
+                    System.out.println("You are on page: " + (i/10+1));
+                    sr.getResults(i);
+                    System.out.printf("\n\n");
+                }
+                sr.updateResearcher(Integer.parseInt(researcher_id));
+                JOptionPane.showMessageDialog(rootPane, "Επιτυχής ενημέρωσης ερευνητή " + researcher_id,
+                        "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+        catch (Exception exception) {            
+            System.out.println(exception.toString());
+        }
+        
+        try {
+            resultSetTableModel.updateView();
+        } catch (SQLException ex) {
+            Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
 } // end class UI 

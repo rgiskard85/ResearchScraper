@@ -2,7 +2,7 @@
 package uitests;
 /**
  *
- * @author giskard
+ * @author Dionysios-Charalampos Vythoulkas <dcvythoulkas@gmail.com>
  */
 
 import java.sql.SQLException;
@@ -16,7 +16,7 @@ public class Uitests {
         try {
             ui = new UI();
             ui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            ui.setSize(600, 800);
+            ui.setSize(800, 700);
             ui.setVisible(true);
         } catch (SQLException ex) {
             Logger.getLogger(Uitests.class.getName()).log(Level.SEVERE, null, ex);

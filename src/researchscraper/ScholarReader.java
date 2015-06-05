@@ -127,7 +127,9 @@ public class ScholarReader {
         }
             
     }
-    
-    
+
+    public void updateResearcher(int researcher_id) {
+        pDBC.updLastUpdate(researcher_id);
+    }
     
 }
