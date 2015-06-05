@@ -59,7 +59,7 @@ public class PostgresDBClient {
             insCitations = connection.prepareStatement("INSERT INTO citations (origin, publication_id, number)"
                     + " VALUES (?, ?, ?)");
             selAllPubRes = connection.prepareStatement("SELECT * FROM pub_res WHERE researcher_id = ? AND publication_id = ?");
-            selCitation = connection.prepareStatement("SELECT citations FROM citations WHERE origin = ? AND publication_id = ?");
+            selCitation = connection.prepareStatement("SELECT number FROM citations WHERE origin = ? AND publication_id = ?");
         }
         catch (SQLException sqlException) {
             sqlException.printStackTrace();
@@ -248,5 +248,15 @@ public class PostgresDBClient {
         catch (SQLException sqlException) {
             sqlException.printStackTrace();
         }
+    }
+    
+    // close connection to release database resources
+    public void conClose() {
+        try {
+            connection.close();
+        }
+        catch(SQLException sqlException) {
+            sqlException.printStackTrace();
+        }        
     }
 }

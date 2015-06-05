@@ -32,29 +32,32 @@ public class Publication {
     // Insert or update records based on scrape results
     public void send2db() {
             
-            // title exists in publication???
-            if (publication_id > -1) {
-                // ... yes
-                // publication is linked to researcher?
-                if (!pDBC.selAllPubRes(researcher_id, publication_id)) {
-                    //...no
-                    // link researcher with publication
-                    pDBC.insPubRes(publication_id, researcher_id);
-                }
-                // citations are up to date?
-                if (pDBC.selCitation(origin, publication_id) != citations){
-                    // ... no
-                    // update citations
-                    pDBC.updCitations(citations, origin, publication_id);
-                }
-            }
-            else {
-                // ... no, insert title in publication and get generated key
-                publication_id = pDBC.insTitle(title);
-                // ... then link the researcher with the publication
+        // title exists in publication???
+        if (publication_id > -1) {
+            // ... yes
+            // publication is linked to researcher?
+            if (!pDBC.selAllPubRes(researcher_id, publication_id)) {
+                //...no
+                // link researcher with publication
                 pDBC.insPubRes(publication_id, researcher_id);
-                // ... then link the publication with the citations number
-                pDBC.insCitations(origin,publication_id, citations);
             }
+            // citations are up to date?
+            if (pDBC.selCitation(origin, publication_id) != citations){
+                // ... no
+                // update citations
+                pDBC.updCitations(citations, origin, publication_id);
+            }
+        }
+        else {
+            // ... no, insert title in publication and get generated key
+            publication_id = pDBC.insTitle(title);
+            // ... then link the researcher with the publication
+            pDBC.insPubRes(publication_id, researcher_id);
+            // ... then link the publication with the citations number
+            pDBC.insCitations(origin,publication_id, citations);
+        }
+        
+        pDBC.conClose();
+        
     }
 }
