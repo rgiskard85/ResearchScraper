@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -51,10 +52,12 @@ public class ScholarReader {
             doc = Jsoup.connect(gScholar).userAgent(browserUserAgent).get(); // actually retrieve scholar's results
         } catch (IOException ex) {
             System.out.println("Oops!!! Something went terribly wrong! Good luck debugging ;)");
-            if (ex.toString().substring(0, 66).equals("org.jsoup.HttpStatusException: HTTP error fetching URL. Status=503"))
-                System.out.println("We overdid it!!! Now Google has blocked our IP :( ");            
-            //Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
-            System.exit(1);
+            if (ex.toString().substring(0, 66).equals("org.jsoup.HttpStatusException: HTTP error fetching URL. Status=503")) {
+                System.out.println("We overdid it!!! Now Google has blocked our IP :( ");
+                JOptionPane.showMessageDialog(null, "Αποκλεισμός IP διεύθυνσης από το Google Scholar",
+                        "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
+            }
+            
         }
     }
     
