@@ -41,7 +41,8 @@ public class PostgresDBClient {
             
             // prepare queries, query-names match those of respective method
             selectAllResearchers = connection.prepareStatement("SELECT researcher_id, name_gr, surname_gr,"
-                    + " name, surname, email, last_update FROM public.researcher");
+                    + " name, surname, email, last_update FROM public.researcher",
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             selResForScrape = connection.prepareStatement("SELECT name, surname FROM researcher "
                     + "WHERE researcher_id = ?");
             selPubIdByTitle = connection.prepareStatement("SELECT publication_id FROM publication"
@@ -77,7 +78,7 @@ public class PostgresDBClient {
         }
         return null;
     }
-    
+
     // select researcher's necessary scrape attributes
     public String[] selResForScrape(int researcher_id) {
         String[] researcherFullName = {"",""};
