@@ -13,7 +13,7 @@ public class ResearchScraper {
 
     
     public static void main(String[] args) {
-        ScholarReader sr = new ScholarReader("8", "", "");
+        ScholarReader sr = new ScholarReader("4", "", "");
         int pages = 0;
         
         if (sr.resultsExist()) System.out.println("We have results!");

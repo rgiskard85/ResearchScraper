@@ -6,6 +6,7 @@
 package researchscraper;
 
 import database.PostgresDBClient;
+import database.Publication;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
@@ -116,7 +117,8 @@ public class ScholarReader {
                 if (!title.equals("")) {
                     System.out.println("Insert researcher_id = " + researcher_id + ", title = " + title + ", citations = " + citations);
                     String origin = "scholar";
-                    this.send2db(origin, researcher_id, title, citations);
+                    Publication publication = new Publication(origin, researcher_id, title, citations);
+                    publication.send2db();
                 }
             }
         } catch (IOException ex) {
@@ -126,33 +128,6 @@ public class ScholarReader {
             
     }
     
-    // Insert or update records based on scrape results
-    private void send2db(String origin, int researcher_id, String title, int citations) {
-            int publication_id = pDBC.selPubIdByTitle(title);
-            // title exists in publication???
-            if (publication_id > -1) {
-                // ... yes
-                // publication is linked to researcher?
-                if (!pDBC.selAllPubRes(researcher_id, publication_id)) {
-                    //...no
-                    // link researcher with publication
-                    pDBC.insPubRes(publication_id, researcher_id);
-                }
-                // citations are up to date?
-                if (pDBC.selCitation(origin, publication_id) != citations){
-                    // ... no
-                    // update citations
-                    pDBC.updCitations(citations, origin, publication_id);
-                }
-            }
-            else {
-                // ... no, insert title in publication and get generated key
-                publication_id = pDBC.insTitle(title);
-                // ... then link the researcher with the publication
-                pDBC.insPubRes(publication_id, researcher_id);
-                // ... then link the publication with the citations number
-                pDBC.insCitations(origin,publication_id, citations);
-            }
-    }
+    
     
 }
