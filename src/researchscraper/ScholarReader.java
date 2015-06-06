@@ -17,6 +17,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+
 /**
  *
  * @author Dionysios-Charalampos Vythoulkas <dcvythoulkas@gmail.com>
@@ -126,7 +127,6 @@ public class ScholarReader {
             }
         } catch (IOException ex) {
             System.out.println("Oops!!! Something went terribly wrong! Good luck debugging ;)");
-            //Logger.getLogger(ResearchScraper.class.getName()).log(Level.SEVERE, null, ex);
         }
             
     }

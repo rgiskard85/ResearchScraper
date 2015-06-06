@@ -11,19 +11,26 @@ package uitests;
  */
 
 import database.PostgresDBClient;
+import database.Researcher;
 import database.ResultSetTableModel;
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -31,6 +38,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
@@ -45,6 +53,8 @@ public class UI extends JFrame {
     private final JPanel panel1; // panel for tab one
     private ResultSetTableModel resultSetTableModel;
     private JTable researchersTable;
+    public JTextArea jtLogger;
+    
     // set up GUI
     public UI() throws SQLException {
         // Frame wide config
@@ -113,6 +123,8 @@ public class UI extends JFrame {
                                     jtxtSurName.getText(),
                                     jtxtEmail.getText()
                             );
+                            jtLogger.append("\nSuccessfully inserted " + jtxtName.getText() + " " +
+                                    jtxtSurName.getText());
                             jtxtAA.setText("");
                             jtxtNameGr.setText("");
                             jtxtSurNameGr.setText("");
@@ -180,6 +192,8 @@ public class UI extends JFrame {
                                     jtxtSurName.getText(),
                                     jtxtEmail.getText()
                             );
+                            jtLogger.append("\nSuccessfully saved " + jtxtName.getText() + " " +
+                                    jtxtSurName.getText());
                             jtxtAA.setText("");
                             jtxtNameGr.setText("");
                             jtxtSurNameGr.setText("");
@@ -215,6 +229,7 @@ public class UI extends JFrame {
                             if (response==0) {
                                 PostgresDBClient pDBC =  new PostgresDBClient();
                                 pDBC.delResearcher(researcher_id);
+                                jtLogger.append("\nSuccessfully inserted " + nameGr + " " +surNameGr);
                                 
                                 try {
                                     resultSetTableModel.updateView();
@@ -242,6 +257,7 @@ public class UI extends JFrame {
                                 "που διαθέτουν οι σύγχρονες μηχανές αναζήτησης. Επιθυμείτε να συνεχίσετε;",
                                 "Επιβεβαίωση Μαζικής Ενημέρωσης",JOptionPane.OK_CANCEL_OPTION);
                         if (response == 0) {
+                            jtLogger.append("\nInitiating Multiple Researcher Update");
                             for (int i = 0;i<researchersTable.getModel().getRowCount();i++) {
                                 ScrapeCoordinator(researchersTable.getModel().getValueAt(i, 0).toString());
                             }
@@ -258,6 +274,7 @@ public class UI extends JFrame {
                     public void actionPerformed(ActionEvent event) {
                         if (researchersTable.getSelectedRow() > -1) {
                             int row = researchersTable.convertRowIndexToModel(researchersTable.getSelectedRow());
+                            jtLogger.append("\nInitiating SingleUpdate");
                             ScrapeCoordinator(researchersTable.getModel().getValueAt(row, 0).toString());
                         }
                         else {
@@ -291,9 +308,10 @@ public class UI extends JFrame {
         researchersTable = new JTable(resultSetTableModel);
         researchersTable.setRowSorter(sorter);
         researchersTable.getTableHeader().setReorderingAllowed(false);
+        // JTextArea
+        jtLogger = new JTextArea("Welcome to ResearchScraper!!!");
         // Position ui objects in the layout
-        // weightx and weighty are 0 : the default
-        
+        // weightx and weighty are 0 : the default        
         constraints.fill = GridBagConstraints.HORIZONTAL;
         addComponent(jlblAA, 0, 0, 2, 1);
         addComponent(jlblNameGr, 1, 0, 2, 1);
@@ -326,15 +344,53 @@ public class UI extends JFrame {
         addComponent(updAcademicBox, 7, 3, 3, 1);        
         constraints.weightx = 100;
         constraints.weighty = 100;
-        addComponent(new JScrollPane(researchersTable), 9, 0, 6,1);
+        addComponent(new JScrollPane(researchersTable), 9, 0, 6,3);
+        addComponent(new JScrollPane(jtLogger), 12, 0, 6, 4);
         
         tabbedPane.addTab("Εισαγωγή", null, panel1, "Διαχείριση εισαγωγών");
         
         //////////////////////////   Panel 2  //////////////////////////////////////////
         // set up panel2 and add it to JTabbedPane
-        JLabel label2 = new JLabel("Panel2", SwingConstants.CENTER);
         JPanel panel2 = new JPanel();
-        panel2.add(label2);
+        BorderLayout borderLayout = new BorderLayout(5,5);
+        panel2.setLayout(borderLayout);
+        // JLabel
+        JLabel label2 = new JLabel("Προβολή αποθηκευμένων δημοσιεύσεων από τη βάση.", SwingConstants.CENTER);
+        // JComboBox
+        PostgresDBClient pDBC = new PostgresDBClient();
+        ArrayList<Researcher> dbResult = pDBC.selResearher();
+        JComboBox<String> jcResearcherMenu = new JComboBox<String>();
+        for (int i = 0; i < dbResult.size(); i++) {
+            jcResearcherMenu.addItem("<" +
+                    Integer.toString(dbResult.get(i).getResearcherID()) + ">" +
+                    dbResult.get(i).getSurNameGr() + " " +
+                    dbResult.get(i).getNameGr()
+            );
+        }
+        jcResearcherMenu.addItemListener(
+                new ItemListener() {// anonymous inner class
+                    // handle JComboBox event and alter JTextArea contents
+                    @Override
+                    public void itemStateChanged(ItemEvent event) {
+                        if (event.getStateChange() == ItemEvent.SELECTED) {
+                            String choice = jcResearcherMenu.getSelectedItem().toString();
+                            int endOfID = choice.indexOf(">");
+                            System.out.println(choice.substring(1,endOfID));
+                            
+                        }
+                    }
+                }
+        );
+        // JTextArea
+        JTextArea jtResults = new JTextArea("Επιλέξτε ερευνητή από το παραπάνω μενού");
+        // Box
+        Box menuBox = Box.createVerticalBox();
+        menuBox.add(Box.createVerticalGlue());
+        menuBox.add(label2);
+        menuBox.add(Box.createVerticalGlue());
+        menuBox.add(jcResearcherMenu);
+        panel2.add(menuBox, BorderLayout.NORTH);
+        panel2.add(jtResults, BorderLayout.CENTER);
         tabbedPane.addTab("Προβολη", null, panel2, "Προβολή καταγεγραμμένων δημοσιεύσεων");
         
         add(tabbedPane); // add JTabbedPane to frame        
@@ -351,6 +407,7 @@ public class UI extends JFrame {
         panel1.add(component);
     }
     
+    // creates a SchcolarReader object and initiates scrape
     private void ScrapeCoordinator(String id) {
         try {
             String researcher_id = id;
@@ -360,27 +417,30 @@ public class UI extends JFrame {
 
             if (sr.resultsExist()) {
                 System.out.println("We have results!");
-                JOptionPane.showMessageDialog(rootPane, "Βρέθηκαν αποτελέσματα για ερευνητή " + researcher_id,
-                        "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
+                jtLogger.append("\nWe have results!");
             }
             else {
                 System.out.println("Your search came up with nothing");
                 JOptionPane.showMessageDialog(rootPane, "Δεν βρέθηκαν αποτελέσματα.\n"
                         + "Τροποποιήστε τα στοιχεία αναζήτησης." + researcher_id,
                         "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
+                jtLogger.append("\nYour search came up with nothing");
             }
 
             if (sr.resultsExist()) {
                 pages = sr.numOfResultPages();
                 if (pages == -2) pages = 0;
                 System.out.println("There are a total of " + pages + " result pages.");
+                jtLogger.append("\nThere are a total of " + pages + " result pages.");
 
                 for (int i = 0;i<(pages*10);i = i + 10) {
                     System.out.println("You are on page: " + (i/10+1));
+                    jtLogger.append("\nYou are on page: " + (i/10+1));
                     sr.getResults(i);
                     System.out.printf("\n\n");
                 }
                 sr.updateResearcher(Integer.parseInt(researcher_id));
+                jtLogger.append("\nSuccessfully updated researcher " + researcher_id);
                 JOptionPane.showMessageDialog(rootPane, "Επιτυχής ενημέρωσης ερευνητή " + researcher_id,
                         "Μήνυμα", JOptionPane.INFORMATION_MESSAGE);
             }
