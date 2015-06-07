@@ -13,6 +13,7 @@ package uitests;
 import database.PostgresDBClient;
 import database.Researcher;
 import database.ResultSetTableModel;
+import database.ResultSetTableModelPub;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -52,7 +53,9 @@ public class UI extends JFrame {
     private final GridBagConstraints constraints; // layout's constraints
     private final JPanel panel1; // panel for tab one
     private ResultSetTableModel resultSetTableModel;
+    private ResultSetTableModelPub resultSetTableModelPub;
     private JTable researchersTable;
+    private JTable publicationsTable;
     public JTextArea jtLogger;
     
     // set up GUI
@@ -229,7 +232,7 @@ public class UI extends JFrame {
                             if (response==0) {
                                 PostgresDBClient pDBC =  new PostgresDBClient();
                                 pDBC.delResearcher(researcher_id);
-                                jtLogger.append("\nSuccessfully inserted " + nameGr + " " +surNameGr);
+                                jtLogger.append("\nSuccessfully Deleted " + nameGr + " " +surNameGr);
                                 
                                 try {
                                     resultSetTableModel.updateView();
@@ -375,14 +378,24 @@ public class UI extends JFrame {
                         if (event.getStateChange() == ItemEvent.SELECTED) {
                             String choice = jcResearcherMenu.getSelectedItem().toString();
                             int endOfID = choice.indexOf(">");
-                            System.out.println(choice.substring(1,endOfID));
+                            String researcher_id = choice.substring(1,endOfID);
+                            System.out.println(researcher_id);
+                            try {
+                                resultSetTableModelPub.updateView(Integer.parseInt(researcher_id));
+                            } catch (SQLException ex) {
+                                Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                             
                         }
                     }
                 }
         );
-        // JTextArea
-        JTextArea jtResults = new JTextArea("Επιλέξτε ερευνητή από το παραπάνω μενού");
+        // JTable
+        resultSetTableModelPub = new ResultSetTableModelPub(-1);
+        final TableRowSorter<TableModel> sorterPub = new TableRowSorter<TableModel>(resultSetTableModelPub);
+        publicationsTable = new JTable(resultSetTableModelPub);
+        publicationsTable.setRowSorter(sorterPub);
+        //publicationsTable.getTableHeader().setReorderingAllowed(false);
         // Box
         Box menuBox = Box.createVerticalBox();
         menuBox.add(Box.createVerticalGlue());
@@ -390,7 +403,7 @@ public class UI extends JFrame {
         menuBox.add(Box.createVerticalGlue());
         menuBox.add(jcResearcherMenu);
         panel2.add(menuBox, BorderLayout.NORTH);
-        panel2.add(jtResults, BorderLayout.CENTER);
+        panel2.add(new JScrollPane(publicationsTable), BorderLayout.CENTER);
         tabbedPane.addTab("Προβολη", null, panel2, "Προβολή καταγεγραμμένων δημοσιεύσεων");
         
         add(tabbedPane); // add JTabbedPane to frame        
@@ -436,7 +449,7 @@ public class UI extends JFrame {
                 for (int i = 0;i<(pages*10);i = i + 10) {
                     System.out.println("You are on page: " + (i/10+1));
                     jtLogger.append("\nYou are on page: " + (i/10+1));
-                    sr.getResults(i);
+                    //sr.getResults(i);
                     System.out.printf("\n\n");
                 }
                 sr.updateResearcher(Integer.parseInt(researcher_id));

@@ -15,6 +15,7 @@ import javax.swing.JOptionPane;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
 
@@ -72,6 +73,13 @@ public class ScholarReader {
     public int numOfResultPages() {
         int numOfPages =-2;
         Element navigation = doc.getElementById("gs_n");
+        Elements bs = navigation.getElementsByTag("b");
+        int i = 0;
+        System.out.println("bs size"+bs.size());
+        for (Element b:bs) {
+            
+            System.out.println(b.toString());
+        }
         return numOfPages + navigation.childNode(0).childNode(0).childNode(0).childNode(0).childNodeSize();
     }
     

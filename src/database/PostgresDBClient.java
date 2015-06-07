@@ -37,6 +37,7 @@ public class PostgresDBClient {
     private PreparedStatement updCitations;
     private PreparedStatement updLastUpdate;
     private PreparedStatement selResearher;
+    private PreparedStatement selPubCitByRes;
     
     public PostgresDBClient() {
         try {
@@ -51,6 +52,11 @@ public class PostgresDBClient {
                     + "WHERE researcher_id = ?");
             selPubIdByTitle = connection.prepareStatement("SELECT publication_id FROM publication"
                     + " WHERE title = ?");
+            selPubCitByRes = connection.prepareStatement("SELECT publication.title, citations.\"number\", " +
+                    "citations.origin, researcher.last_update FROM public.citations, public.pub_res, "
+                    + "public.publication, public.researcher WHERE publication.publication_id = pub_res.publication_id"
+                    + " AND publication.publication_id = citations.publication_id AND researcher.researcher_id = pub_res.researcher_id"
+                    + " AND researcher.researcher_id = ?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             insResearcher = connection.prepareStatement("INSERT INTO public.researcher "
                     + "(name_gr, surname_gr, name, surname, email) VALUES ( ?, ?, ?, ?, ?)");
             insTitle = connection.prepareStatement("INSERT INTO publication (title) VALUES (?)",
@@ -167,6 +173,18 @@ public class PostgresDBClient {
             sqlException.printStackTrace();
         }
         return response;
+    }
+    
+    // select publications and citations by researcher
+    public ResultSet selPubCitByRes(int researcher_id) {
+        try {
+            selPubCitByRes.setInt(1, researcher_id);
+            return selPubCitByRes.executeQuery();
+        }
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return null;
     }
     
     // insert new record in table researcher
