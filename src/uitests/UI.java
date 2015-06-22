@@ -448,8 +448,8 @@ public class UI extends JFrame {
 
                 for (int i = 0;i<(pages*10);i = i + 10) {
                     System.out.println("You are on page: " + (i/10+1));
-                    jtLogger.append("\nYou are on page: " + (i/10+1));
-                    //sr.getResults(i);
+                    //jtLogger.append("\nYou are on page: " + (i/10+1));
+                    sr.getResults(i);
                     System.out.printf("\n\n");
                 }
                 sr.updateResearcher(Integer.parseInt(researcher_id));
