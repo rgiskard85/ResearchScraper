@@ -287,8 +287,8 @@ public class UI extends JFrame {
                     }
                 }
         );
-        JButton jbMSMultiUpdate = new JButton("Μαζική ενημέρωση");
-        JButton jbMSSingleUpdate = new JButton("Μεμονωμένη Ενημέρωση");
+        JButton jbAMMultiUpdate = new JButton("Μαζική ενημέρωση");
+        JButton jbAMSingleUpdate = new JButton("Μεμονωμένη Ενημέρωση");
         // Box
         Box updScholarBox = Box.createHorizontalBox();        
         updScholarBox.add(Box.createHorizontalGlue());
@@ -300,11 +300,11 @@ public class UI extends JFrame {
         
         Box updAcademicBox = Box.createHorizontalBox();        
         updAcademicBox.add(Box.createHorizontalGlue());
-        updAcademicBox.add(jbMSMultiUpdate);
+        updAcademicBox.add(jbAMMultiUpdate);
         updAcademicBox.add(Box.createHorizontalGlue());
-        updAcademicBox.add(jbMSSingleUpdate);
+        updAcademicBox.add(jbAMSingleUpdate);
         updAcademicBox.add(Box.createHorizontalGlue());
-        updAcademicBox.setBorder(BorderFactory.createTitledBorder(null, "Microsoft Acadmemic",TitledBorder.LEFT, TitledBorder.ABOVE_TOP));
+        updAcademicBox.setBorder(BorderFactory.createTitledBorder(null, "AMiner",TitledBorder.LEFT, TitledBorder.ABOVE_TOP));
         // JTable
         resultSetTableModel = new ResultSetTableModel();
         final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(resultSetTableModel);
